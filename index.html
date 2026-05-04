@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAI — Système de Formulaires Officiels</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root {
+  --dark:    #1A2E1A;
+  --green:   #3A6B3A;
+  --mid:     #4B7A4B;
+  --light:   #C6E0B4;
+  --xlight:  #EBF5EB;
+  --gold:    #B8860B;
+  --goldL:   #FFF8DC;
+  --red:     #8B0000;
+  --redL:    #FFE4E4;
+  --orange:  #CC5500;
+  --orangeL: #FFF2CC;
+  --grey:    #F4F4F4;
+  --grey2:   #E8E8E8;
+  --ink:     #222222;
+  --sidebar: 300px;
+  --topbar:  56px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: #0e1a0e; }
+body { font-family: 'IBM Plex Sans', sans-serif; color: var(--ink); display: flex; flex-direction: column; }
+
+/* ── TOP BAR ── */
+#topbar {
+  height: var(--topbar);
+  background: var(--dark);
+  display: flex; align-items: center;
+  padding: 0 24px;
+  border-bottom: 2px solid var(--green);
+  z-index: 100;
+  flex-shrink: 0;
+}
+#topbar .logo {
+  font-family: 'EB Garamond', serif;
+  font-size: 18px; font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+#topbar .logo span { color: var(--light); font-weight: 400; font-style: italic; }
+#topbar .badge {
+  margin-left: auto;
+  background: var(--green);
+  color: #fff;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+}
+
+/* ── LAYOUT ── */
+#layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: var(--sidebar);
+  background: #111d11;
+  border-right: 1px solid #2a402a;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+#sidebar-search {
+  padding: 14px 16px;
+  border-bottom: 1px solid #2a402a;
+  flex-shrink: 0;
+}
+#sidebar-search input {
+  width: 100%;
+  background: #1a2e1a;
+  border: 1px solid #3a5a3a;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #d0e8d0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  outline: none;
+}
+#sidebar-search input::placeholder { color: #5a7a5a; }
+#sidebar-search input:focus { border-color: var(--light); }
+
+#sidebar-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 0;
+}
+#sidebar-list::-webkit-scrollbar { width: 4px; }
+#sidebar-list::-webkit-scrollbar-track { background: transparent; }
+#sidebar-list::-webkit-scrollbar-thumb { background: #3a5a3a; border-radius: 2px; }
+
+.sidebar-group { padding: 12px 16px 4px; }
+.sidebar-group-label {
+  font-size: 10px; font-weight: 600;
+  color: #5a7a5a;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.form-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  border: none; background: none; width: 100%; text-align: left;
+  border-radius: 0;
+  transition: background 0.12s;
+}
+.form-btn:hover { background: #1e321e; }
+.form-btn.active { background: #2a4a2a; border-left: 3px solid var(--light); }
+.form-btn .ref {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--light);
+  background: #1a3a1a;
+  padding: 2px 5px;
+  border-radius: 2px;
+  min-width: 50px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.form-btn .name {
+  font-size: 12px;
+  color: #a0c8a0;
+  line-height: 1.3;
+}
+.form-btn.active .name { color: #d0e8d0; }
+.classif-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  flex-shrink: 0; margin-left: auto;
+}
+.classif-dot.conf   { background: var(--mid); }
+.classif-dot.secret { background: var(--red); }
+.classif-dot.restr  { background: var(--orange); }
+.classif-dot.libre  { background: #888; }
+
+/* ── MAIN AREA ── */
+#main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── FORM PANEL ── */
+#form-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+  background: #f0f4f0;
+}
+#form-panel::-webkit-scrollbar { width: 6px; }
+#form-panel::-webkit-scrollbar-track { background: transparent; }
+#form-panel::-webkit-scrollbar-thumb { background: #aaa; border-radius: 3px; }
+
+#welcome {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; text-align: center;
+  color: #6a8a6a;
+}
+#welcome .wi {
+  font-size: 64px; margin-bottom: 24px; opacity: 0.3;
+}
+#welcome h2 {
+  font-family: 'EB Garamond', serif;
+  font-size: 28px; font-weight: 400;
+  color: #4a6a4a; margin-bottom: 8px;
+}
+#welcome p { font-size: 14px; color: #8aaa8a; }
+
+/* ── DOCUMENT HEADER IN FORM ── */
+.doc-header {
+  background: var(--dark);
+  color: #fff;
+  padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: 4px 4px 0 0;
+  margin-bottom: 0;
+}
+.doc-header .org {
+  font-family: 'EB Garamond', serif;
+  font-size: 15px; font-weight: 600; letter-spacing: 0.3px;
+}
+.doc-header .div-name {
+  font-size: 12px; color: var(--light); font-style: italic;
+}
+
+.doc-ref-bar {
+  display: grid; grid-template-columns: 160px 1fr 180px;
+  border: 1px solid #ccc; border-top: none;
+}
+.doc-ref-bar > div {
+  padding: 8px 14px;
+  border-right: 1px solid #ccc;
+}
+.doc-ref-bar > div:last-child { border-right: none; }
+.doc-ref-bar .ref-code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; color: #666;
+}
+.doc-ref-bar .doc-title {
+  font-family: 'EB Garamond', serif;
+  font-size: 18px; font-weight: 600; text-align: center; color: var(--dark);
+}
+.doc-ref-bar .classif-badge {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+  text-align: center; padding: 8px 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.classif-dark   { background: var(--dark); color: #fff; }
+.classif-secret { background: var(--red);  color: #fff; }
+.classif-restr  { background: var(--orange); color: #fff; }
+.classif-libre  { background: var(--mid);  color: #fff; }
+
+.doc-separator {
+  height: 3px; background: var(--mid); margin-bottom: 20px;
+}
+
+/* ── FORM FIELDS ── */
+.form-section-header {
+  padding: 9px 16px;
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: 0;
+}
+.fsh-dark   { background: var(--dark); color: #fff; }
+.fsh-green  { background: var(--green); color: #fff; }
+.fsh-orange { background: var(--orange); color: #fff; }
+.fsh-red    { background: var(--red); color: #fff; }
+.fsh-mid    { background: var(--mid); color: #fff; }
+
+.field-row {
+  display: grid; grid-template-columns: 220px 1fr;
+  border: 1px solid #d0d8d0; border-top: none;
+}
+.field-label {
+  background: var(--grey);
+  padding: 9px 14px;
+  font-size: 12px; font-weight: 600;
+  color: var(--ink);
+  border-right: 1px solid #d0d8d0;
+  display: flex; align-items: flex-start;
+  line-height: 1.4;
+}
+.field-input-wrap {
+  background: #fff;
+  padding: 6px 10px;
+}
+.field-input-wrap input,
+.field-input-wrap textarea {
+  width: 100%;
+  border: none; outline: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  background: transparent;
+  resize: none;
+  line-height: 1.5;
+}
+.field-input-wrap textarea { display: block; }
+
+.checkbox-row {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid #d0d8d0; border-top: none;
+}
+.checkbox-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid #d0d8d0;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  user-select: none;
+  transition: all 0.1s;
+  background: var(--grey);
+  color: #444;
+}
+.checkbox-item:hover { border-color: var(--mid); background: var(--xlight); }
+.checkbox-item.checked {
+  background: var(--xlight);
+  border-color: var(--mid);
+  color: var(--dark);
+  font-weight: 600;
+}
+.checkbox-item .cb-box {
+  width: 14px; height: 14px;
+  border: 1.5px solid #aaa;
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 10px;
+  transition: all 0.1s;
+}
+.checkbox-item.checked .cb-box {
+  background: var(--mid); border-color: var(--mid); color: #fff;
+}
+
+.sig-block {
+  display: grid;
+  border: 1px solid #d0d8d0; border-top: none;
+}
+.sig-cell {
+  border-right: 1px solid #d0d8d0;
+  padding: 10px 14px;
+}
+.sig-cell:last-child { border-right: none; }
+.sig-cell-label {
+  background: var(--grey);
+  padding: 8px 14px;
+  font-size: 11px; font-weight: 600; text-align: center;
+  border-bottom: 1px solid #d0d8d0;
+  color: var(--ink);
+  white-space: pre-line;
+  line-height: 1.4;
+}
+.sig-lines { padding: 12px 14px; background: #fff; }
+.sig-line {
+  font-size: 12px; color: #888;
+  padding: 5px 0; border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 6px;
+}
+.sig-line:last-child { border-bottom: none; margin-bottom: 0; }
+
+.notice-box {
+  padding: 11px 16px;
+  font-size: 12px; line-height: 1.6;
+  border-left: 4px solid;
+  border-radius: 0 3px 3px 0;
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+.notice-warn   { background: var(--orangeL); border-color: var(--orange); color: #663300; }
+.notice-danger { background: var(--redL);    border-color: var(--red);    color: var(--red); }
+.notice-info   { background: var(--xlight);  border-color: var(--mid);    color: #2a4a2a; }
+.notice-gold   { background: var(--goldL);   border-color: var(--gold);   color: #5a4000; }
+
+.phrase-box {
+  background: var(--goldL);
+  border: 1px solid var(--gold);
+  border-left: 4px solid var(--gold);
+  padding: 14px 20px;
+  font-family: 'EB Garamond', serif;
+  font-size: 14px; font-style: italic;
+  color: #4a3000;
+  line-height: 1.7;
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+
+.form-block {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+/* ── PDF BUTTON ── */
+#pdf-bar {
+  display: none;
+  position: sticky; bottom: 0;
+  background: var(--dark);
+  border-top: 2px solid var(--green);
+  padding: 14px 32px;
+  display: flex; align-items: center; gap: 16px;
+}
+#pdf-bar.hidden { display: none !important; }
+#btn-pdf {
+  background: var(--mid);
+  color: #fff;
+  border: none;
+  padding: 11px 28px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px; font-weight: 600;
+  border-radius: 3px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background 0.15s;
+  display: flex; align-items: center; gap: 8px;
+}
+#btn-pdf:hover { background: var(--green); }
+#btn-reset {
+  background: none;
+  color: #a0c0a0;
+  border: 1px solid #3a5a3a;
+  padding: 10px 20px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+#btn-reset:hover { background: #1e321e; color: #d0e8d0; }
+#pdf-bar .form-name-label {
+  font-family: 'EB Garamond', serif;
+  font-size: 16px; color: #8ab08a; font-style: italic;
+  margin-left: auto;
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo">BRIGADE SPÉCIALE <span>· 4ème Division des Affaires Internes</span></div>
+  <div class="badge">SYSTÈME DAI — FORMULAIRES OFFICIELS</div>
+</div>
+
+<div id="layout">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div id="sidebar-search">
+      <input type="text" id="search-input" placeholder="Rechercher un formulaire…" oninput="filterForms(this.value)">
+    </div>
+    <div id="sidebar-list">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="form-panel">
+      <div id="welcome">
+        <div class="wi">⚖</div>
+        <h2>Système de Formulaires Officiels</h2>
+        <p>Sélectionnez un formulaire dans le panneau de gauche<br>pour commencer la saisie.</p>
+      </div>
+      <div id="form-container" style="display:none;"></div>
+      <div id="pdf-bar" class="hidden">
+        <button id="btn-pdf" onclick="generatePDF()">
+          <span>▼</span> Générer le PDF
+        </button>
+        <button id="btn-reset" onclick="resetForm()">↺ Réinitialiser</button>
+        <span class="form-name-label" id="pdf-form-name"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// FORM DEFINITIONS
+// Each field: ['type', ...args]
+// H  = section header     ['H', 'TITLE', 'dark|green|orange|red|mid']
+// F  = single field       ['F', 'Label', 'id']
+// FL = long field         ['FL', 'Label', 'id', rows]
+// CB = checkboxes         ['CB', ['opt1','opt2',...], 'id']
+// SIG= signature block    ['SIG', ['Signer1','Signer2',...]]
+// N  = notice             ['N', 'text', 'warn|danger|info|gold']
+// PH = phrase box         ['PH', 'text']
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const CLASSIF = {
+  CONF:   { label: 'CONFIDENTIEL — USAGE INTERNE', css: 'classif-dark',   dot: 'conf'   },
+  SECRET: { label: 'SECRET — COMMISSAIRE GÉNÉRAL', css: 'classif-secret', dot: 'secret' },
+  RESTR:  { label: 'USAGE RESTREINT',              css: 'classif-restr',  dot: 'restr'  },
+  LIBRE:  { label: 'DIFFUSION LIBRE',              css: 'classif-libre',  dot: 'libre'  },
+};
+
+const FORMS = [
+  // ── DAI-01 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-01', title:"MANDAT D'ENQUÊTE", cat:'Enquête', classif:'CONF', fields:[
+    ['H','IDENTIFICATION DU MANDAT','dark'],
+    ['F','Numéro de dossier','num_dossier'],
+    ['F','Date d\'ouverture','date_ouverture'],
+    ['F','Classe d\'enquête (A / B / C)','classe'],
+    ['F','Secteur concerné','secteur'],
+    ['F','Responsable désigné — Grade & Nom','responsable'],
+    ['H','NATURE DES FAITS','green'],
+    ['FL','Description des faits','description',4],
+    ['FL','Base légale (articles Code de Justice Militaire / Lois de l\'Humanité)','base_legale',2],
+    ['F','Source du signalement','source'],
+    ['H','PERSONNES IMPLIQUÉES','green'],
+    ['FL','Suspect(s) / Cible(s) — Grade, Nom, Division','suspects',3],
+    ['FL','Témoins identifiés','temoins',2],
+    ['H','PÉRIMÈTRE ET RESSOURCES','green'],
+    ['FL','Périmètre d\'investigation autorisé','perimetre',2],
+    ['F','Équipe affectée','equipe'],
+    ['F','Délai rapport intermédiaire','delai_rapport'],
+    ['H','RESTRICTIONS ET NOTES','green'],
+    ['FL','Instructions particulières / restrictions','restrictions',3],
+    ['SIG',['Émetteur du Mandat\n(Commissaire / Crs. Gén.)','Visa État-Major\n(si Classe A)']],
+    ['N','Ce mandat autorise l\'ouverture formelle de l\'enquête. Toute action hors périmètre défini doit faire l\'objet d\'un avenant signé (DAI-19).','warn'],
+  ]},
+
+  // ── DAI-02 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-02', title:"RAPPORT D'OUVERTURE D'ENQUÊTE", cat:'Enquête', classif:'CONF', fields:[
+    ['H','IDENTIFICATION','dark'],
+    ['F','N° de dossier (DAI-01 associé)','num_dossier'],
+    ['F','Inspecteur en Chef responsable','insp_chef'],
+    ['F','Commissaire de secteur','commissaire'],
+    ['F','Date de rédaction du rapport','date_redaction'],
+    ['H','SYNTHÈSE DES FAITS INITIAUX','green'],
+    ['FL','Résumé factuel de l\'affaire','resume',5],
+    ['F','Classe attribuée (A / B / C)','classe'],
+    ['FL','Justification de la classe retenue','justif_classe',2],
+    ['H','ÉLÉMENTS DISPONIBLES À L\'OUVERTURE','green'],
+    ['FL','Preuves initiales / indices','preuves',3],
+    ['FL','Témoignages reçus','temoignages',2],
+    ['F','Nombre de sources corroborantes','nb_sources'],
+    ['H','PLAN D\'ENQUÊTE PRÉVISIONNEL','green'],
+    ['FL','Étapes d\'investigation planifiées','etapes',4],
+    ['F','Délai estimé pour rapport intermédiaire','delai'],
+    ['F','Notification État-Major requise (O / N)','notif_em'],
+    ['SIG',['Inspecteur en Chef','Commissaire de secteur']],
+  ]},
+
+  // ── DAI-03 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-03', title:"RAPPORT INTERMÉDIAIRE D'ENQUÊTE", cat:'Enquête', classif:'CONF', fields:[
+    ['H','RÉFÉRENCE DOSSIER','dark'],
+    ['F','N° de dossier','num_dossier'],
+    ['F','Numéro du rapport intermédiaire (ex : 02/03)','num_rapport'],
+    ['F','Période couverte','periode'],
+    ['F','Rédacteur — Grade & Nom','redacteur'],
+    ['H','AVANCEMENT DE L\'ENQUÊTE','green'],
+    ['FL','Actions menées depuis le dernier rapport','actions',4],
+    ['FL','Nouvelles preuves ou informations obtenues','nouvelles_preuves',4],
+    ['FL','Difficultés ou obstacles rencontrés','obstacles',2],
+    ['H','ÉTAT DU DOSSIER','green'],
+    ['F','Classe maintenue / révisée (A / B / C)','classe'],
+    ['FL','Motif de révision de classe (si applicable)','motif_revision',2],
+    ['H','PROCHAINES ÉTAPES','green'],
+    ['FL','Actions planifiées pour la prochaine période','prochaines_actions',3],
+    ['F','Date prévue du prochain rapport','date_prochain'],
+    ['F','Ressources supplémentaires requises (O / N)','ressources_req'],
+    ['FL','Si oui — préciser','ressources_detail',2],
+    ['SIG',['Inspecteur / Insp. en Chef','Commissaire de secteur']],
+  ]},
+
+  // ── DAI-04 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-04', title:"RAPPORT DE CLÔTURE D'ENQUÊTE", cat:'Enquête', classif:'CONF', fields:[
+    ['H','IDENTIFICATION','dark'],
+    ['F','N° de dossier','num_dossier'],
+    ['F','Date d\'ouverture de l\'enquête','date_ouverture'],
+    ['F','Date de clôture','date_cloture'],
+    ['F','Responsable de l\'enquête — Grade & Nom','responsable'],
+    ['H','SYNTHÈSE FINALE','green'],
+    ['FL','Résumé complet des faits établis','resume',5],
+    ['FL','Preuves retenues','preuves_retenues',3],
+    ['FL','Preuves écartées — motif','preuves_ecartees',2],
+    ['H','CONCLUSION ET SUITE DONNÉE','green'],
+    ['CB',['Classement sans suite','Sanction interne','Renvoi au Tribunal Militaire','Transfert État-Major'],'suite'],
+    ['FL','Justification de la décision retenue','justif_decision',3],
+    ['FL','Sanctions recommandées (si applicable)','sanctions',2],
+    ['F','Personnes mises en cause — identité complète','mises_en_cause'],
+    ['FL','Observations finales du responsable','observations',3],
+    ['SIG',['Inspecteur en Chef','Commissaire','Commissaire Général']],
+  ]},
+
+  // ── DAI-05 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-05', title:"PROCÈS-VERBAL D'AUDITION DE TÉMOIN", cat:'Auditions', classif:'CONF', fields:[
+    ['H','CADRE DE L\'AUDITION','dark'],
+    ['F','N° de dossier associé','num_dossier'],
+    ['F','Date et heure de l\'audition','datetime'],
+    ['F','Lieu de l\'audition','lieu'],
+    ['F','Inspecteur meneur — Grade & Nom','insp_meneur'],
+    ['F','Inspecteur greffier — Grade & Nom','insp_greffier'],
+    ['H','IDENTITÉ DU TÉMOIN','green'],
+    ['F','Nom & Prénom','nom_temoin'],
+    ['F','Grade / Statut civil','grade_temoin'],
+    ['F','Division / Affectation','division_temoin'],
+    ['CB',['Témoin','Suspect','Plaignant','Informateur'],'statut_temoin'],
+    ['H','DÉCLARATIONS','green'],
+    ['FL','Question 1','q1',2],
+    ['FL','Réponse 1','r1',3],
+    ['FL','Question 2','q2',2],
+    ['FL','Réponse 2','r2',3],
+    ['FL','Question 3','q3',2],
+    ['FL','Réponse 3','r3',3],
+    ['FL','Question 4','q4',2],
+    ['FL','Réponse 4','r4',3],
+    ['FL','Observations de l\'Inspecteur meneur','observations',2],
+    ['CB',['Refus de répondre (consigné)','Témoin a signé','Traduction requise'],'options_pv'],
+    ['N','Je soussigné(e) certifie que les déclarations ci-dessus sont fidèles à mes propos.','info'],
+    ['SIG',['Signature du témoin','Inspecteur meneur','Inspecteur greffier']],
+  ]},
+
+  // ── DAI-06 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-06', title:"PROCÈS-VERBAL D'INTERROGATOIRE", cat:'Auditions', classif:'SECRET', fields:[
+    ['H','CADRE ET AUTORISATION','dark'],
+    ['F','N° de dossier associé','num_dossier'],
+    ['F','Date et heure','datetime'],
+    ['F','Lieu','lieu'],
+    ['CB',['Standard (sans autorisation)','Avancé (autorisation Officier obligatoire)'],'type_interro'],
+    ['F','Officier ayant autorisé (si avancé) — Grade & Nom','officier_auteur'],
+    ['F','Référence de l\'autorisation écrite (DAI-07)','ref_autorisation'],
+    ['F','Inspecteur conducteur — Grade & Nom','insp_conducteur'],
+    ['F','Membres présents','membres_presents'],
+    ['H','IDENTITÉ DE L\'INDIVIDU INTERROGÉ','green'],
+    ['F','Nom & Prénom','nom'],
+    ['F','Grade / Statut','grade'],
+    ['F','Division','division'],
+    ['FL','Motif de l\'interrogatoire','motif',2],
+    ['F','L\'individu a été informé du motif (O / N — heure)','informe'],
+    ['H','DÉROULEMENT — TRANSCRIPTION','green'],
+    ['FL','Question 1','q1',2],
+    ['FL','Réponse 1','r1',3],
+    ['FL','Question 2','q2',2],
+    ['FL','Réponse 2','r2',3],
+    ['FL','Question 3','q3',2],
+    ['FL','Réponse 3','r3',3],
+    ['FL','Question 4','q4',2],
+    ['FL','Réponse 4','r4',3],
+    ['H','MÉTHODES EMPLOYÉES (INTERROGATOIRE AVANCÉ UNIQUEMENT)','red'],
+    ['FL','Méthodes utilisées et justification de proportionnalité','methodes',3],
+    ['F','Usage de substances médicamenteuses (O/N) — 5ème Division présente','substances'],
+    ['H','BILAN','green'],
+    ['FL','Informations obtenues','informations',3],
+    ['FL','Observations de l\'Inspecteur','observations',2],
+    ['SIG',['Inspecteur conducteur','Officier autorisateur\n(si avancé)','Commissaire de secteur']],
+  ]},
+
+  // ── DAI-07 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-07', title:"AUTORISATION D'INTERROGATOIRE AVANCÉ", cat:'Auditions', classif:'SECRET', fields:[
+    ['N','Cette autorisation est exigée avant tout recours aux méthodes d\'interrogatoire avancées, conformément à l\'Article 6 du Titre I du Manuel et au Titre IV de la Charte Interne.','info'],
+    ['H','DEMANDE — REMPLI PAR L\'INSPECTEUR','dark'],
+    ['F','N° de dossier','num_dossier'],
+    ['F','Inspecteur demandeur — Grade & Nom','insp_demandeur'],
+    ['F','Individu ciblé — Grade & Nom','cible'],
+    ['FL','Motif de la demande — pourquoi l\'interrogatoire standard a échoué','motif_echec',3],
+    ['FL','Informations recherchées','infos_recherchees',3],
+    ['FL','Méthodes envisagées','methodes_envisagees',2],
+    ['F','Intervention 5ème Division Médicale souhaitée (O / N)','div5_souhaitee'],
+    ['F','Date et heure de la demande','date_demande'],
+    ['H','DÉCISION — REMPLI PAR L\'OFFICIER AUTORISATEUR','red'],
+    ['F','Officier autorisateur — Grade & Nom','officier'],
+    ['CB',['AUTORISATION ACCORDÉE','AUTORISATION REFUSÉE'],'decision'],
+    ['FL','Motivations / restrictions imposées','motivations',3],
+    ['F','Date et heure de la décision','date_decision'],
+    ['SIG',['Inspecteur demandeur','Officier autorisateur\n(Signature OBLIGATOIRE)']],
+    ['N','Ce formulaire doit être conservé et versé au dossier. Une copie est transmise au Commissaire Général dans les 12 heures suivant la décision.','warn'],
+  ]},
+
+  // ── DAI-08 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-08', title:"JOURNAL DE BORD DE SURVEILLANCE", cat:'Surveillance', classif:'CONF', fields:[
+    ['H','IDENTIFICATION DE L\'OPÉRATION','dark'],
+    ['F','N° de dossier','num_dossier'],
+    ['F','Codename opération','codename'],
+    ['F','Cible — Grade & Nom (ou identifiant couvert)','cible'],
+    ['F','Responsable de surveillance — Grade & Nom','responsable'],
+    ['F','Agents déployés','agents'],
+    ['F','Durée autorisée','duree_autorisee'],
+    ['H','ENTRÉES DE SURVEILLANCE','green'],
+    ['FL','Entrée n°1 — Heure :          Lieu :','entree1',3],
+    ['FL','Entrée n°2 — Heure :          Lieu :','entree2',3],
+    ['FL','Entrée n°3 — Heure :          Lieu :','entree3',3],
+    ['FL','Entrée n°4 — Heure :          Lieu :','entree4',3],
+    ['FL','Entrée n°5 — Heure :          Lieu :','entree5',3],
+    ['FL','Entrée n°6 — Heure :          Lieu :','entree6',3],
+    ['H','BILAN DE SESSION','green'],
+    ['FL','Résumé des éléments significatifs','resume',3],
+    ['F','Renouvellement de surveillance requis (O / N)','renouvellement'],
+    ['F','Rapport transmis à l\'Inspecteur en Chef (O / N)','rapport_transmis'],
+    ['SIG',['Agent / Inspecteur rédacteur','Inspecteur en Chef']],
+  ]},
+
+  // ── DAI-09 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-09', title:"RAPPORT DE TERRAIN — AGENT", cat:'Surveillance', classif:'CONF', fields:[
+    ['H','IDENTIFICATION DE LA MISSION','dark'],
+    ['F','N° de dossier','num_dossier'],
+    ['CB',['Surveillance','Soutien d\'enquête','Interpellation','Protection','Autre'],'type_mission'],
+    ['F','Agent rédacteur — Grade & Nom','agent_redacteur'],
+    ['F','Inspecteur mandant — Grade & Nom','insp_mandant'],
+    ['F','Date et heure début / fin','datetime_mission'],
+    ['F','Zone d\'intervention','zone'],
+    ['H','COMPTE RENDU D\'EXÉCUTION','green'],
+    ['FL','Déroulement chronologique de la mission','deroulement',6],
+    ['FL','Incidents / événements imprévus','incidents',3],
+    ['H','USAGE DE LA FORCE ET DES ÉQUIPEMENTS','green'],
+    ['F','Usage de la force (O / N)','usage_force'],
+    ['FL','Si oui — description et justification de proportionnalité','justif_force',3],
+    ['F','Équipements utilisés','equipements'],
+    ['H','RÉSULTATS ET INFORMATIONS COLLECTÉES','green'],
+    ['FL','Informations et observations pertinentes','informations',4],
+    ['FL','Éléments de preuve collectés','preuves',2],
+    ['FL','Recommandations à la hiérarchie','recommandations',2],
+    ['SIG',['Agent rédacteur','Inspecteur mandant']],
+  ]},
+
+  // ── DAI-10 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-10', title:"NOTE D'ESCALADE DE CLASSE D'ENQUÊTE", cat:'Procédures internes', classif:'RESTR', fields:[
+    ['N','Ce formulaire est utilisé lorsqu\'une enquête révèle des éléments justifiant une reclassification. Il doit être transmis dans l\'heure au Commissaire de secteur.','warn'],
+    ['H','DOSSIER CONCERNÉ','dark'],
+    ['F','N° de dossier','num_dossier'],
+    ['F','Classe actuelle','classe_actuelle'],
+    ['F','Classe demandée','classe_demandee'],
+    ['F','Rédacteur de la note — Grade & Nom','redacteur'],
+    ['F','Date et heure','datetime'],
+    ['H','MOTIFS DE L\'ESCALADE','orange'],
+    ['FL','Nouveaux éléments justifiant la reclassification','motifs',4],
+    ['FL','Impact sur le périmètre de l\'enquête','impact',3],
+    ['FL','Ressources supplémentaires requises','ressources',2],
+    ['H','VALIDATION PAR LE COMMISSAIRE','green'],
+    ['CB',['Escalade accordée','Escalade refusée — classe maintenue'],'decision'],
+    ['FL','Observations du Commissaire','observations',2],
+    ['SIG',['Rédacteur','Commissaire de secteur','Commissaire Général\n(si escalade vers A)']],
+  ]},
+
+  // ── DAI-11 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-11', title:"FORMULAIRE DE SIGNALEMENT INTERNE", cat:'Procédures internes', classif:'CONF', fields:[
+    ['N','Tout membre de la Brigade Spéciale peut adresser un signalement via ce formulaire. Un signalement anonyme (champs identité vides) doit être corroboré pour déclencher une enquête Classe A ou B.','info'],
+    ['H','IDENTITÉ DU SIGNALANT (facultatif — anonymat possible)','dark'],
+    ['F','Nom & Prénom (ou ANONYME)','nom_signalant'],
+    ['F','Grade / Statut','grade_signalant'],
+    ['F','Division','division_signalant'],
+    ['H','FAITS SIGNALÉS','green'],
+    ['FL','Description des faits constatés ou suspectés','description',5],
+    ['F','Date(s) approximative(s) des faits','date_faits'],
+    ['F','Lieu(x)','lieu_faits'],
+    ['H','PERSONNE(S) MISE(S) EN CAUSE','green'],
+    ['FL','Grade, Nom, Division de la personne mise en cause','personne_cause',2],
+    ['H','ÉLÉMENTS DE PREUVE DISPONIBLES','green'],
+    ['FL','Preuves, témoins ou indices pouvant étayer le signalement','preuves',3],
+    ['H','TRAITEMENT PAR LES AFFAIRES INTERNES','mid'],
+    ['F','Reçu par — Grade & Nom','recu_par'],
+    ['F','Date de réception','date_reception'],
+    ['F','Suite donnée','suite_donnee'],
+    ['F','N° de dossier ouvert (si applicable)','num_dossier'],
+    ['SIG',['Signalant (ou ANONYME)','Agent réceptionnaire\n(Affaires Internes)']],
+    ['N','⚠  Un faux signalement délibéré constitue une faute grave passible de sanctions disciplinaires sévères et d\'une procédure devant le Tribunal Militaire.','danger'],
+  ]},
+
+  // ── DAI-12 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-12', title:"MANDAT DE SUSPENSION D'UN MEMBRE", cat:'Sanctions', classif:'SECRET', fields:[
+    ['N','La suspension prend effet à la notification verbale, formalisée par ce document dans les 6 heures. Seul le Commissaire Général peut émettre ce mandat.','warn'],
+    ['H','MEMBRE SUSPENDU','dark'],
+    ['F','Grade & Nom','membre_nom'],
+    ['F','Poste / Secteur au sein de la Division','poste'],
+    ['F','Date et heure de notification verbale','datetime_notif'],
+    ['H','MOTIFS DE LA SUSPENSION','red'],
+    ['FL','Faits reprochés (résumé)','faits_reproches',4],
+    ['F','N° de dossier de la procédure instruite','num_dossier'],
+    ['H','EFFETS DE LA SUSPENSION','green'],
+    ['FL','Droits d\'accès retirés (dossiers, zones, équipements)','droits_retires',2],
+    ['F','Officier désigné pour instruire la procédure','officier_instructeur'],
+    ['F','Durée prévisionnelle de la suspension','duree'],
+    ['H','NOTIFICATIONS EFFECTUÉES','green'],
+    ['F','Notification à l\'État-Major (O/N — date)','notif_em'],
+    ['F','Notification au Commandant (O/N — date)','notif_commandant'],
+    ['SIG',['Commissaire Général','Officier instructeur désigné']],
+  ]},
+
+  // ── DAI-13 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-13', title:"NOTE DE RÉCUSATION — CONFLIT D'INTÉRÊTS", cat:'Procédures internes', classif:'RESTR', fields:[
+    ['N','Tout membre constatant un conflit d\'intérêts avec un dossier doit se récuser immédiatement et remettre ce formulaire à son supérieur.','info'],
+    ['H','AGENT SE RÉCUSANT','dark'],
+    ['F','Grade & Nom','nom_agent'],
+    ['F','Poste actuel','poste'],
+    ['F','N° de dossier concerné','num_dossier'],
+    ['H','NATURE DU CONFLIT D\'INTÉRÊTS','orange'],
+    ['FL','Description du lien avec la cible ou les faits de l\'enquête','description',3],
+    ['CB',['Lien personnel (ami, famille)','Lien hiérarchique direct','Intérêt dans l\'affaire','Ancien condisciple'],'type_conflit'],
+    ['FL','Précisions complémentaires','precisions',3],
+    ['H','PRISE EN CHARGE PAR LE SUPÉRIEUR','green'],
+    ['F','Supérieur réceptionnaire — Grade & Nom','superieur'],
+    ['F','Inspecteur / Commissaire désigné en remplacement','remplacant'],
+    ['F','Date de prise d\'effet de la récusation','date_effet'],
+    ['SIG',['Agent se récusant','Supérieur réceptionnaire']],
+  ]},
+
+  // ── DAI-14 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-14', title:"RAPPORT D'OPÉRATION DE CONTRE-ESPIONNAGE", cat:'Contre-espionnage', classif:'SECRET', fields:[
+    ['N','Document strictement réservé aux opérations de contre-espionnage. Circulation limitée à l\'État-Major, au Commissaire Général et aux Officiers directement impliqués.','danger'],
+    ['H','IDENTIFICATION DE L\'OPÉRATION','dark'],
+    ['F','Codename de l\'opération','codename'],
+    ['F','N° de dossier','num_dossier'],
+    ['CB',['Phase 1 — Évaluation initiale','Phase 2 — Surveillance discrète','Phase 3 — Collecte de preuves','Phase 4 — Interpellation','Phase 5 — Rapport final'],'phase'],
+    ['F','Commissaire responsable — Grade & Nom','commissaire'],
+    ['F','Date du rapport','date'],
+    ['H','CIBLE','red'],
+    ['F','Grade & Nom (ou identifiant couvert)','cible_identite'],
+    ['F','Division / Affectation','cible_division'],
+    ['FL','Suspicions à l\'origine de l\'opération','suspicions',3],
+    ['H','ÉLÉMENTS D\'ENQUÊTE','green'],
+    ['FL','Preuves d\'infiltration ou de double allégeance','preuves_infiltration',4],
+    ['FL','Contacts suspects identifiés','contacts_suspects',3],
+    ['FL','Informations potentiellement compromises','infos_compromises',2],
+    ['H','COORDINATION INTER-DIVISIONS','green'],
+    ['F','2ème Division d\'Élite sollicitée (O / N)','div2'],
+    ['F','5ème Division Médicale sollicitée (O / N)','div5'],
+    ['F','1ère Division Centrale impliquée (O / N)','div1'],
+    ['H','CONCLUSION ET DÉCISION','green'],
+    ['FL','Résultats de l\'opération','resultats',3],
+    ['F','Suite recommandée','suite'],
+    ['SIG',['Commissaire responsable','Commissaire Général','État-Major\n(si Classe A)']],
+  ]},
+
+  // ── DAI-15 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-15', title:"RÉQUISITION D'UNE DIVISION EXTÉRIEURE", cat:'Procédures internes', classif:'RESTR', fields:[
+    ['H','IDENTIFICATION','dark'],
+    ['F','N° de dossier','num_dossier'],
+    ['F','Division requérante (DAI)','div_querante'],
+    ['F','Grade & Nom du requérant','nom_requerant'],
+    ['F','Date de la réquisition','date'],
+    ['H','DIVISION REQUISE','green'],
+    ['CB',['1ère Division Centrale','2ème Division d\'Élite','3ème Division Garde Royale','5ème Division Médicale'],'division_requise'],
+    ['FL','Nature de l\'assistance requise','nature_assistance',3],
+    ['F','Cadre de l\'intervention','cadre'],
+    ['F','Durée estimée','duree'],
+    ['F','Lieu d\'intervention','lieu'],
+    ['H','VALIDATION','green'],
+    ['F','Accord Commissaire Général (O / N)','accord_cg'],
+    ['FL','Conditions posées à la réquisition','conditions',2],
+    ['F','Référent de la division requise — Grade & Nom','referent'],
+    ['SIG',['Commissaire Général','Représentant division requise']],
+  ]},
+
+  // ── DAI-16 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-16', title:"DEMANDE DE PROMOTION — AVANCEMENT", cat:'Administration', classif:'LIBRE', fields:[
+    ['H','AGENT PROPOSÉ À LA PROMOTION','dark'],
+    ['F','Grade & Nom actuel','nom_agent'],
+    ['F','Corps actuel','corps_actuel'],
+    ['F','Secteur d\'affectation','secteur'],
+    ['F','Date d\'entrée dans la Division','date_entree'],
+    ['F','Grade proposé','grade_propose'],
+    ['H','CONDITIONS VÉRIFIÉES','green'],
+    ['CB',['Missions terrain suffisantes','Rapports jugés satisfaisants','Aucune procédure disciplinaire en cours'],'conditions'],
+    ['FL','Évaluation du proposant — points forts','points_forts',3],
+    ['FL','Points d\'amélioration identifiés','points_amelio',2],
+    ['F','Nombre de missions complètes participées','nb_missions'],
+    ['F','Nombre d\'enquêtes instruites (si corps inspectoral)','nb_enquetes'],
+    ['H','DÉCISION','green'],
+    ['CB',['Promotion accordée','Promotion refusée','Reportée — motif ci-dessous'],'decision'],
+    ['FL','Observations / motif de refus ou report','observations',2],
+    ['F','Date d\'effet de la promotion','date_effet'],
+    ['SIG',['Proposant\n(Insp. en Chef / Commissaire)','Commissaire de secteur','Commissaire Général\n(si accès corps insp.)']],
+  ]},
+
+  // ── DAI-17 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-17', title:"FICHE DE RENSEIGNEMENT", cat:'Renseignement', classif:'SECRET', fields:[
+    ['N','Ce document consigne une information de renseignement. Il est versé au registre de renseignement classifié. Il peut ou non déboucher sur l\'ouverture d\'un dossier.','info'],
+    ['H','SOURCE','dark'],
+    ['F','Référence source (nom ou codename)','source_ref'],
+    ['CB',['Très fiable (confirmée)','Fiable (généralement exacte)','Assez fiable (parfois inexacte)','Non évaluée','Douteuse'],'fiabilite'],
+    ['F','Date et heure de réception','datetime_reception'],
+    ['F','Inspecteur réceptionnaire — Grade & Nom','insp_receptionnaire'],
+    ['H','CONTENU DU RENSEIGNEMENT','green'],
+    ['FL','Information brute (texte exact ou résumé fidèle)','info_brute',5],
+    ['F','Personnes citées — Grade & Nom','personnes_citees'],
+    ['F','Lieu / Période concernés','lieu_periode'],
+    ['H','ÉVALUATION ET SUITE','green'],
+    ['FL','Analyse préliminaire de l\'Inspecteur','analyse',3],
+    ['F','Corroboration disponible (O / N)','corroboration'],
+    ['F','Dossier ouvert (O / N) — N° si oui','dossier_ouvert'],
+    ['F','Transmis au Commissaire (O / N — date)','transmis'],
+    ['SIG',['Inspecteur réceptionnaire','Commissaire de secteur']],
+  ]},
+
+  // ── DAI-18 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-18', title:"PROCÈS-VERBAL D'ARRESTATION", cat:'Arrestation', classif:'CONF', fields:[
+    ['N','Conformément au Titre VI, Sous-titre II du Manuel de la Brigade Spéciale. Toute arrestation doit se fonder sur une infraction prouvée ou un constat de flagrance.','info'],
+    ['H','CADRE DE L\'ARRESTATION','dark'],
+    ['F','N° de dossier','num_dossier'],
+    ['F','Date et heure de l\'arrestation','datetime_arrestation'],
+    ['F','Lieu','lieu'],
+    ['F','Agents procédant à l\'arrestation','agents'],
+    ['H','IDENTITÉ DE L\'INDIVIDU ARRÊTÉ','green'],
+    ['F','Nom & Prénom','nom'],
+    ['F','Grade / Statut civil','grade'],
+    ['F','Division / Affiliation','division'],
+    ['H','FONDEMENT LÉGAL','green'],
+    ['FL','Infraction(s) reprochée(s) — article(s) du Code de Justice Militaire / Lois de l\'Humanité','infractions',3],
+    ['CB',['Enquête préalable','Flagrant délit'],'base_arrestation'],
+    ['PH','« Au nom de Sa Majesté, vous êtes placé en état d\'arrestation pour avoir enfreint [les articles …] du Code de Justice Militaire / des Lois de l\'Humanité. Votre coopération est obligatoire et tout refus d\'obtempérer sera sanctionné. Cette arrestation est menée par [identifiez-vous]. »'],
+    ['H','TRAITEMENT DE L\'INDIVIDU','green'],
+    ['F','Menottes posées (O / N)','menottes'],
+    ['F','Individu informé du motif (O / N — heure)','informe'],
+    ['F','État de santé à l\'arrestation','etat_sante'],
+    ['FL','Objets saisis lors de l\'arrestation','objets_saisis',2],
+    ['F','Lieu de détention provisoire','lieu_detention'],
+    ['SIG',['Agent procédant','Inspecteur mandant / présent']],
+  ]},
+
+  // ── DAI-19 ────────────────────────────────────────────────────────────────
+  { ref:'DAI-19', title:"AVENANT AU MANDAT D'ENQUÊTE", cat:'Enquête', classif:'CONF', fields:[
+    ['N','Ce document modifie le périmètre, les ressources ou les instructions d\'un mandat déjà émis (DAI-01), sans nécessiter un nouveau mandat complet.','info'],
+    ['H','RÉFÉRENCE','dark'],
+    ['F','N° du mandat initial (DAI-01)','num_mandat'],
+    ['F','N° de l\'avenant (ex : AVN-02)','num_avenant'],
+    ['F','Date de l\'avenant','date'],
+    ['F','Émetteur de l\'avenant — Grade & Nom','emetteur'],
+    ['H','MODIFICATIONS APPORTÉES','orange'],
+    ['CB',['Extension du périmètre','Réduction du périmètre','Ajout de ressources','Modification du responsable','Prolongation du délai'],'type_modif'],
+    ['FL','Description précise des modifications','description',4],
+    ['FL','Motifs des modifications','motifs',2],
+    ['H','VALIDATION','green'],
+    ['F','Accord du Commissaire (O / N)','accord_commissaire'],
+    ['F','Accord Commissaire Général si Classe A (O / N)','accord_cg'],
+    ['SIG',['Émetteur','Commissaire de secteur','Commissaire Général\n(si Classe A)']],
+  ]},
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SIDEBAR RENDERING
+// ═══════════════════════════════════════════════════════════════════════════════
+const CATS = ['Enquête','Auditions','Surveillance','Contre-espionnage','Renseignement','Arrestation','Procédures internes','Sanctions','Administration'];
+
+function buildSidebar(filter='') {
+  const list = document.getElementById('sidebar-list');
+  list.innerHTML = '';
+  const fl = filter.toLowerCase();
+
+  CATS.forEach(cat => {
+    const forms = FORMS.filter(f =>
+      f.cat === cat &&
+      (fl === '' || f.ref.toLowerCase().includes(fl) || f.title.toLowerCase().includes(fl))
+    );
+    if (!forms.length) return;
+
+    const grp = document.createElement('div');
+    grp.className = 'sidebar-group';
+    grp.innerHTML = `<div class="sidebar-group-label">${cat}</div>`;
+    list.appendChild(grp);
+
+    forms.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'form-btn';
+      btn.dataset.ref = f.ref;
+      btn.onclick = () => loadForm(f.ref);
+      const dotClass = {CONF:'conf',SECRET:'secret',RESTR:'restr',LIBRE:'libre'}[f.classif] || 'conf';
+      btn.innerHTML = `
+        <span class="ref">${f.ref}</span>
+        <span class="name">${f.title}</span>
+        <span class="classif-dot ${dotClass}"></span>`;
+      list.appendChild(btn);
+    });
+  });
+}
+
+function filterForms(val) { buildSidebar(val); }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FORM RENDERING
+// ═══════════════════════════════════════════════════════════════════════════════
+let currentForm = null;
+
+function loadForm(ref) {
+  const form = FORMS.find(f => f.ref === ref);
+  if (!form) return;
+  currentForm = form;
+
+  // Update sidebar active
+  document.querySelectorAll('.form-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.ref === ref);
+  });
+
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('form-container').style.display = 'block';
+  document.getElementById('pdf-bar').classList.remove('hidden');
+  document.getElementById('pdf-form-name').textContent = form.ref + ' — ' + form.title;
+
+  renderForm(form);
+}
+
+function renderForm(form) {
+  const container = document.getElementById('form-container');
+  container.innerHTML = '';
+
+  const classifInfo = CLASSIF[form.classif];
+
+  const block = document.createElement('div');
+  block.className = 'form-block';
+
+  // Header
+  block.innerHTML += `
+    <div class="doc-header">
+      <div>
+        <div class="org">BRIGADE SPÉCIALE</div>
+        <div class="div-name">4ème Division des Affaires Internes · Manuel de la Brigade Spéciale</div>
+      </div>
+    </div>
+    <div class="doc-ref-bar">
+      <div><div class="ref-code">Réf. ${form.ref}</div></div>
+      <div><div class="doc-title">${form.title}</div></div>
+      <div class="classif-badge ${classifInfo.css}">${classifInfo.label}</div>
+    </div>
+    <div class="doc-separator"></div>`;
+
+  // Fields
+  let isFirstRow = true;
+  form.fields.forEach((field, idx) => {
+    const type = field[0];
+
+    if (type === 'H') {
+      const colorCls = {dark:'fsh-dark',green:'fsh-green',orange:'fsh-orange',red:'fsh-red',mid:'fsh-mid'}[field[2]] || 'fsh-dark';
+      block.innerHTML += `<div class="form-section-header ${colorCls}">${field[1]}</div>`;
+      isFirstRow = true;
+
+    } else if (type === 'F') {
+      const topBorder = isFirstRow ? '1px solid #d0d8d0' : 'none';
+      block.innerHTML += `
+        <div class="field-row" style="border-top:${topBorder}">
+          <div class="field-label">${field[1]}</div>
+          <div class="field-input-wrap">
+            <input type="text" id="${form.ref}_${field[2]}" data-field="${field[2]}" placeholder="…" autocomplete="off">
+          </div>
+        </div>`;
+      isFirstRow = false;
+
+    } else if (type === 'FL') {
+      const rows = field[3] || 2;
+      const h = Math.max(rows * 22, 48);
+      const topBorder = isFirstRow ? '1px solid #d0d8d0' : 'none';
+      block.innerHTML += `
+        <div class="field-row" style="align-items:flex-start; border-top:${topBorder}">
+          <div class="field-label">${field[1]}</div>
+          <div class="field-input-wrap">
+            <textarea id="${form.ref}_${field[2]}" data-field="${field[2]}" rows="${rows}" placeholder="…" style="min-height:${h}px"></textarea>
+          </div>
+        </div>`;
+      isFirstRow = false;
+
+    } else if (type === 'CB') {
+      const opts = field[1];
+      const id = field[2] || 'cb_'+idx;
+      let cbsHtml = `<div class="checkbox-row" data-cb-id="${form.ref}_${id}">`;
+      opts.forEach((opt, oi) => {
+        cbsHtml += `<div class="checkbox-item" data-opt="${oi}" onclick="toggleCB(this)">`+
+          `<span class="cb-box"></span><span>${opt}</span></div>`;
+      });
+      cbsHtml += `</div>`;
+      block.innerHTML += cbsHtml;
+      isFirstRow = false;
+
+    } else if (type === 'SIG') {
+      const signers = field[1];
+      const colW = 100 / signers.length;
+      let sigHtml = `<div class="sig-block" style="grid-template-columns:repeat(${signers.length},1fr)">`;
+      signers.forEach(s => {
+        sigHtml += `<div class="sig-cell">
+          <div class="sig-cell-label">${s}</div>
+          <div class="sig-lines">
+            <div class="sig-line">Grade & Nom : ……………………………………</div>
+            <div class="sig-line">Signature :      ……………………………………</div>
+            <div class="sig-line">Date & Heure : ……………………………………</div>
+          </div>
+        </div>`;
+      });
+      sigHtml += `</div>`;
+      block.innerHTML += sigHtml;
+      isFirstRow = true;
+
+    } else if (type === 'N') {
+      const nType = field[2] || 'info';
+      const icons = {warn:'⚠ ',danger:'✖ ',info:'ℹ ',gold:'★ '};
+      block.innerHTML += `<div class="notice-box notice-${nType}">${icons[nType]||''}${field[1]}</div>`;
+      isFirstRow = true;
+
+    } else if (type === 'PH') {
+      block.innerHTML += `<div class="phrase-box">${field[1]}</div>`;
+      isFirstRow = true;
+    }
+  });
+
+  container.appendChild(block);
+}
+
+function toggleCB(el) {
+  el.classList.toggle('checked');
+  const box = el.querySelector('.cb-box');
+  box.textContent = el.classList.contains('checked') ? '✓' : '';
+}
+
+function resetForm() {
+  if (!currentForm) return;
+  if (!confirm('Réinitialiser tous les champs du formulaire ?')) return;
+  renderForm(currentForm);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PDF GENERATION
+// ═══════════════════════════════════════════════════════════════════════════════
+function generatePDF() {
+  if (!currentForm) return;
+  const form = currentForm;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p','pt','a4');
+
+  const PW = 595, PH = 842, M = 35;
+  const CW = PW - 2*M;
+
+  // Colors
+  const COL = {
+    dark:    [26,46,26],
+    green:   [58,107,58],
+    mid:     [75,122,75],
+    light:   [198,224,180],
+    xlight:  [235,245,235],
+    gold:    [184,134,11],
+    goldL:   [255,248,220],
+    red:     [139,0,0],
+    redL:    [255,228,228],
+    orange:  [204,85,0],
+    orangeL: [255,242,204],
+    grey:    [244,244,244],
+    grey2:   [232,232,232],
+    white:   [255,255,255],
+    black:   [0,0,0],
+    ink:     [34,34,34],
+  };
+
+  const classifColors = {
+    CONF:   COL.dark,
+    SECRET: COL.red,
+    RESTR:  COL.orange,
+    LIBRE:  COL.mid,
+  };
+  const classifLabel = {
+    CONF:   'CONFIDENTIEL — USAGE INTERNE',
+    SECRET: 'SECRET — COMMISSAIRE GÉNÉRAL',
+    RESTR:  'USAGE RESTREINT',
+    LIBRE:  'DIFFUSION LIBRE',
+  };
+
+  let y = M;
+  let page = 1;
+
+  function checkPage(needed) {
+    if (y + needed > PH - M) {
+      doc.addPage();
+      y = M;
+      page++;
+    }
+  }
+
+  function setFill(c) { doc.setFillColor(...c); }
+  function setDraw(c) { doc.setDrawColor(...c); }
+  function setTxt(c)  { doc.setTextColor(...c); }
+  function rect(x,yy,w,h,c) { setFill(c); doc.rect(x,yy,w,h,'F'); }
+  function rectB(x,yy,w,h,fill,stroke,lw=0.5) {
+    setFill(fill); setDraw(stroke); doc.setLineWidth(lw);
+    doc.rect(x,yy,w,h,'FD');
+  }
+  function txt(text, x, yy, opts={}) {
+    doc.setFont(opts.font||'helvetica', opts.style||'normal');
+    doc.setFontSize(opts.size||9);
+    setTxt(opts.color||COL.black);
+    doc.text(text+'', x, yy, {align: opts.align||'left', maxWidth: opts.maxWidth});
+  }
+
+  // ── DOC HEADER ──────────────────────────────────────────────────────────────
+  function drawDocHeader() {
+    // Top dark bar
+    rect(M, y, CW, 22, COL.dark);
+    txt('BRIGADE SPÉCIALE', M+8, y+9, {style:'bold', size:10, color:COL.white});
+    txt('4ème Division des Affaires Internes · Manuel de la Brigade Spéciale', M+8, y+17, {size:7.5, color:COL.light});
+    y += 22;
+
+    // Ref / Title / Classif bar
+    const refW = 120, classifW = 140, titleW = CW-refW-classifW;
+    rectB(M, y, refW, 22, COL.grey, [200,210,200]);
+    txt('Réf. '+form.ref, M+5, y+9, {size:8, color:[100,100,100]});
+    txt('', M+5, y+17, {size:7, color:[120,120,120]});
+
+    rectB(M+refW, y, titleW, 22, COL.white, [200,210,200]);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); setTxt(COL.dark);
+    const titleLines = doc.splitTextToSize(form.title, titleW-8);
+    const titleY = titleLines.length > 1 ? y+9 : y+13;
+    doc.text(titleLines, M+refW+titleW/2, titleY, {align:'center', maxWidth: titleW-8});
+
+    const cc = classifColors[form.classif] || COL.dark;
+    rect(M+refW+titleW, y, classifW, 22, cc);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); setTxt(COL.white);
+    const cl = classifLabel[form.classif] || '';
+    doc.text(cl, M+refW+titleW+classifW/2, y+13, {align:'center', maxWidth:classifW-4});
+    y += 22;
+
+    // Separator
+    doc.setDrawColor(...COL.mid); doc.setLineWidth(2);
+    doc.line(M, y+2, M+CW, y+2);
+    y += 8;
+  }
+
+  // ── FIELD ROW ───────────────────────────────────────────────────────────────
+  function drawField(label, value, lineCount=1) {
+    const labelW = 155, valW = CW-labelW;
+
+    // Pre-split both label and value to compute real height
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    const lLines = doc.splitTextToSize(label+'', labelW-8);
+    const lH = lLines.length * 10 + 4;
+
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    const vLines = value ? doc.splitTextToSize(value+'', valW-8) : [];
+    const minH = lineCount === 1 ? 18 : Math.max(lineCount * 12, 24);
+    const vH = Math.max(vLines.length * 11 + 4, minH);
+
+    const rowH = Math.max(lH, vH, 18);
+    checkPage(rowH + 4);
+
+    rectB(M, y, labelW, rowH, COL.grey, [200,210,200], 0.3);
+    rectB(M+labelW, y, valW, rowH, COL.white, [200,210,200], 0.3);
+
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); setTxt(COL.ink);
+    doc.text(lLines, M+4, y+8, {maxWidth: labelW-8});
+
+    if (vLines.length) {
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); setTxt(COL.ink);
+      doc.text(vLines, M+labelW+4, y+8, {maxWidth: valW-8});
+    }
+
+    y += rowH;
+  }
+
+  // ── SECTION HEADER ─────────────────────────────────────────────────────────
+  function drawSectionHeader(label, colorKey) {
+    const c = {dark:COL.dark,green:COL.green,orange:COL.orange,red:COL.red,mid:COL.mid}[colorKey]||COL.dark;
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+    const slines = doc.splitTextToSize(label+'', CW-12);
+    const sh = Math.max(slines.length * 11 + 5, 16);
+    checkPage(sh + 4);
+    rect(M, y, CW, sh, c);
+    setTxt(COL.white);
+    doc.text(slines, M+6, y+10, {maxWidth: CW-12});
+    y += sh;
+  }
+
+  // ── CHECKBOX ROW ───────────────────────────────────────────────────────────
+  function drawCheckboxRow(opts, selected) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    // Measure items and lay them out in rows
+    const ITEM_PAD = 8, CB_W = 9, GAP = 6;
+    const rows = [[]]; let curW = 0;
+    opts.forEach((opt, i) => {
+      const w = CB_W + GAP + doc.getTextWidth(opt) + ITEM_PAD*2;
+      if (curW + w > CW - 8 && rows[rows.length-1].length > 0) {
+        rows.push([]); curW = 0;
+      }
+      rows[rows.length-1].push({opt, i, w});
+      curW += w + 4;
+    });
+    const rowH = rows.length * 18 + 4;
+    checkPage(rowH + 4);
+    rectB(M, y, CW, rowH, COL.white, [200,210,200], 0.3);
+    rows.forEach((row, ri) => {
+      let cx = M+6;
+      const ry = y + ri*18 + 5;
+      row.forEach(({opt, i, w}) => {
+        const isChecked = selected.includes(i);
+        rectB(cx, ry, 9, 9, isChecked ? COL.mid : COL.grey, [150,180,150], 0.5);
+        if (isChecked) {
+          doc.setFont('helvetica','bold'); doc.setFontSize(7); setTxt(COL.white);
+          doc.text('✓', cx+1.5, ry+7);
+        }
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); setTxt(COL.ink);
+        doc.text(opt+'', cx+12, ry+7, {maxWidth: CW-cx-12});
+        cx += w + 4;
+      });
+    });
+    y += rowH;
+  }
+
+  // ── SIGNATURE BLOCK ────────────────────────────────────────────────────────
+  function drawSignatures(signers) {
+    checkPage(50);
+    const cellW = CW / signers.length;
+    const cellH = 52;
+    signers.forEach((s, i) => {
+      const cx = M + i*cellW;
+      rect(cx, y, cellW, 14, COL.grey);
+      doc.setDrawColor(200,210,200); doc.setLineWidth(0.3);
+      doc.rect(cx, y, cellW, cellH);
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); setTxt(COL.ink);
+      const slines = doc.splitTextToSize(s+'', cellW-8);
+      const sy = y + (14 - slines.length*9)/2 + 6;
+      doc.text(slines, cx+cellW/2, sy, {align:'center', maxWidth:cellW-8});
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); setTxt([140,140,140]);
+      doc.text('Grade & Nom : ………………………………', cx+4, y+22);
+      doc.text('Signature :      ………………………………', cx+4, y+33);
+      doc.text('Date & Heure : ………………………………', cx+4, y+44);
+    });
+    y += cellH + 4;
+  }
+
+  // ── NOTICE BOX ─────────────────────────────────────────────────────────────
+  function drawNotice(text, type) {
+    const configs = {
+      warn:   {fill:COL.orangeL, border:COL.orange, icon:'! '},
+      danger: {fill:COL.redL,    border:COL.red,    icon:'x '},
+      info:   {fill:COL.xlight,  border:COL.mid,    icon:'i '},
+      gold:   {fill:COL.goldL,   border:COL.gold,   icon:'* '},
+    };
+    const cfg = configs[type] || configs.info;
+    const maxTxtW = CW - 22;
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+    const iconW = doc.getTextWidth(cfg.icon);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    const lines = doc.splitTextToSize(text+'', maxTxtW - iconW - 2);
+    const h = Math.max(lines.length * 11 + 10, 20);
+    checkPage(h + 6);
+    rectB(M, y, CW, h, cfg.fill, cfg.border, 0.4);
+    doc.setDrawColor(...cfg.border); doc.setLineWidth(3);
+    doc.line(M, y, M, y+h);
+    doc.setLineWidth(0.4);
+    // Icon
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); setTxt(cfg.border);
+    doc.text(cfg.icon, M+6, y+10);
+    // Text
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); setTxt(COL.ink);
+    doc.text(lines, M+6+iconW+2, y+10, {maxWidth: maxTxtW - iconW});
+    y += h + 4;
+  }
+
+  // ── PHRASE BOX ─────────────────────────────────────────────────────────────
+  function drawPhrase(text) {
+    doc.setFont('helvetica','italic'); doc.setFontSize(8.5);
+    const lines = doc.splitTextToSize(text+'', CW-24);
+    const h = lines.length * 12 + 14;
+    checkPage(h+6);
+    rectB(M, y, CW, h, COL.goldL, COL.gold, 0.5);
+    doc.setDrawColor(...COL.gold); doc.setLineWidth(2.5);
+    doc.line(M, y, M, y+h);
+    setTxt([74,48,0]);
+    doc.text(lines, M+10, y+11, {maxWidth: CW-24});
+    y += h+4;
+  }
+
+  // ── READ FORM VALUES ───────────────────────────────────────────────────────
+  function getVal(fieldId) {
+    const el = document.getElementById(form.ref+'_'+fieldId);
+    return el ? (el.value || '') : '';
+  }
+
+  function getChecked(cbId) {
+    const row = document.querySelector(`[data-cb-id="${form.ref}_${cbId}"]`);
+    if (!row) return { selected:[], labels:[] };
+    const items = row.querySelectorAll('.checkbox-item');
+    const selected = [], labels = [];
+    items.forEach((item, i) => {
+      if (item.classList.contains('checked')) {
+        selected.push(i);
+        labels.push(item.querySelector('span:last-child').textContent);
+      }
+    });
+    return { selected, labels };
+  }
+
+  // ── RENDER ─────────────────────────────────────────────────────────────────
+  drawDocHeader();
+
+  form.fields.forEach((field, idx) => {
+    const type = field[0];
+
+    if (type === 'H') {
+      drawSectionHeader(field[1], field[2]);
+
+    } else if (type === 'F') {
+      const val = getVal(field[2]);
+      drawField(field[1], val, 1);
+
+    } else if (type === 'FL') {
+      const val = getVal(field[2]);
+      const rows = field[3] || 2;
+      drawField(field[1], val, rows);
+
+    } else if (type === 'CB') {
+      const cbId = field[2] || 'cb_'+idx;
+      const { selected, labels } = getChecked(cbId);
+      drawCheckboxRow(field[1], selected);
+
+    } else if (type === 'SIG') {
+      drawSignatures(field[1]);
+
+    } else if (type === 'N') {
+      drawNotice(field[1], field[2]);
+
+    } else if (type === 'PH') {
+      drawPhrase(field[1]);
+    }
+  });
+
+  // Footer on each page
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); setTxt([160,160,160]);
+    doc.text(`Brigade Spéciale · 4ème Division des Affaires Internes · ${form.ref} — ${form.title}`, M, PH-12);
+    doc.text(`Page ${p} / ${totalPages}`, PW-M, PH-12, {align:'right'});
+    doc.setDrawColor(150,180,150); doc.setLineWidth(0.5);
+    doc.line(M, PH-18, PW-M, PH-18);
+  }
+
+  doc.save(`${form.ref}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════════
+buildSidebar();
+</script>
+</body>
+</html>
